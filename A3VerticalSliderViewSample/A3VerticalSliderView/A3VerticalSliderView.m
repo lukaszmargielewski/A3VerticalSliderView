@@ -37,10 +37,13 @@
 
 
 #import "A3VerticalSliderView.h"
+#import <QuartzCore/QuartzCore.h>
 
 @interface A3VerticalSliderView (){
     BOOL    _indicatorTouched;
     CGFloat _indicatorYOffset;
+    
+    UIImageView *bgView, *bgColorView;
 }
 
 - (void)_init;
@@ -48,11 +51,39 @@
 
 @implementation A3VerticalSliderView
 
+- (void) dealloc{
+
+    [_positionIndicator release];
+
+    
+    [bgView release];
+    [bgColorView release];
+    
+    [super dealloc];
+}
 
 - (void)_init{
+    
+    CGRect b = self.bounds;
+    
+    bgView = [[UIImageView alloc] initWithFrame:b];
+    bgView.contentMode = UIViewContentModeScaleToFill;
+    bgView.backgroundColor = [UIColor clearColor];
+    
+    //bgView.layer.borderWidth = 1.0;
+    
+    bgColorView = [[UIImageView alloc] initWithFrame:b];
+    bgColorView.contentMode = UIViewContentModeScaleToFill;
+    bgColorView.backgroundColor = [UIColor clearColor];
+    
+    //bgColorView.layer.borderWidth = 1.0;
+    
+    [self addSubview:bgView];
+    [self addSubview:bgColorView];
+    
     // indicator view
-    CGRect positionIndicatorFrame = self.bounds;
-    positionIndicatorFrame.size.height = 80.0f;
+    CGRect positionIndicatorFrame = b;
+    positionIndicatorFrame.size.height = b.size.width;
     
     _positionIndicator = [[UIView alloc] initWithFrame:positionIndicatorFrame];
     [self addSubview:_positionIndicator];
@@ -92,13 +123,43 @@
     return self;
 }
 
-- (void) dealloc{
-    [_positionIndicator release];
-    [_delegate release];
-    
-    [super dealloc];
+-(void)setBackgroundImage:(UIImage *)backgroundImage{
+
+    bgView.image = backgroundImage;
+    [self setNeedsLayout];
 }
 
+-(void)setBackgroundImageColor:(UIImage *)backgroundImageColor{
+    
+    bgColorView.image = backgroundImageColor;
+    [self updateBackgroundFrames];
+}
+-(void)updateBackgroundFrames{
+
+    CGRect b = self.bounds;
+    
+    CGFloat y = CGRectGetMidY(self.positionIndicator.frame);
+    
+    CGRect fc = b;
+    fc.size.width = bgColorView.image.size.width;
+    fc.origin.x = (CGRectGetWidth(b) - CGRectGetWidth(fc)) / 2.0;
+    fc.size.height = y;
+    
+    bgColorView.frame = fc;
+}
+-(void)layoutSubviews{
+
+    CGRect b = self.bounds;
+    
+    CGRect fb = b;
+    fb.size.width = bgView.image.size.width;
+    fb.origin.x = (CGRectGetWidth(b) - CGRectGetWidth(fb)) / 2.0;
+    bgView.frame = fb;
+    
+    [self updateBackgroundFrames];
+    
+    
+}
 - (void)setSliderValue:(CGFloat)aValue{
     [self setSliderValue:aValue animated:NO];
 }
@@ -112,7 +173,7 @@
     
     CGRect newFrame = self.positionIndicator.frame;
     newFrame.origin.y = aValue*trueHeight;
-    
+    newFrame.origin.x = (CGRectGetWidth(self.bounds) - CGRectGetWidth(newFrame)) / 2.0;
     // call delegate
     if ([self.delegate respondsToSelector:@selector(A3VerticalSliderViewWillStartMoving:)]) {
         [self.delegate A3VerticalSliderViewWillStartMoving:self];
@@ -125,6 +186,7 @@
                             options:UIViewAnimationOptionBeginFromCurrentState | UIViewAnimationOptionCurveEaseIn
                          animations:^{
                              self.positionIndicator.frame = newFrame;
+                             [self updateBackgroundFrames];
                          }
                          completion:^(BOOL finished) {
                              // call delegate
@@ -135,6 +197,7 @@
          ];
     }else{
         self.positionIndicator.frame = newFrame;
+        [self updateBackgroundFrames];
         
         // call delegate
         if ([self.delegate respondsToSelector:@selector(A3VerticalSliderViewDidStopMoving:)]) {

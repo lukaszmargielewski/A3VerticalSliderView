@@ -77,7 +77,20 @@
 /**
  @description The delegate of the Slider.
  */
-@property (nonatomic, retain) id<A3VerticalSliderViewDelegate> delegate;
+@property (nonatomic, assign) id<A3VerticalSliderViewDelegate> delegate;
+
+/**
+ @description THe background image of slider
+ */
+@property (nonatomic, strong) UIImage *backgroundImage;
+
+/**
+ @description The image presented to the value of slider.
+ */
+@property (nonatomic, strong) UIImage *backgroundImageColor;
+
+
+
 
 /**
  @description This is the draggable part of the Slider.
